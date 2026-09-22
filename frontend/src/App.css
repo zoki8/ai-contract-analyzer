@@ -1,0 +1,72 @@
+.container {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  font-family: system-ui, sans-serif;
+}
+.disclaimer {
+  color: #888;
+  font-size: 0.9rem;
+}
+.upload-box {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin: 1.5rem 0;
+}
+.error {
+  color: #d9534f;
+  font-weight: 600;
+}
+.progress {
+  margin: 1.5rem 0;
+}
+.bar {
+  height: 8px;
+  background: #eee;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  background: #4a90d9;
+  transition: width 0.3s;
+}
+.card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  text-align: left;
+}
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.category {
+  font-weight: 600;
+  text-transform: capitalize;
+}
+.severity {
+  color: white;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+blockquote {
+  margin: 0.5rem 0;
+  padding-left: 0.8rem;
+  border-left: 3px solid #ccc;
+  color: #444;
+  font-style: italic;
+}
+.warn {
+  color: #d9534f;
+  font-size: 0.85rem;
+}
+.findings {
+  text-align: left;
+}
