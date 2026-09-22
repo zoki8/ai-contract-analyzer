@@ -1,0 +1,6 @@
+[
+  {"category": "auto_renewal", "quote_contains": "renews automatically"},
+  {"category": "penalty", "quote_contains": "5% per day"},
+  {"category": "termination", "quote_contains": "terminate this agreement at any time without notice"},
+  {"category": "liability", "quote_contains": "limited to 100 EUR"}
+]
