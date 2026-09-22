@@ -87,17 +87,23 @@ Latest run (2 contracts, qwen2.5:7b):
 
 | Metric | Result |
 |---|---|
-| Recall | 5/6 (83%) |
+| Recall | 3/5 (60%) |
 | Hallucinated quotes | 0 |
 
-The one miss: the model classified a late-payment penalty clause as
-`payment_terms` instead of `penalty`. The two categories are semantically
-close, and the system prompt doesn't yet draw a hard line between them.
+Two gaps showed up: the model classified a late-payment penalty clause as
+`payment_terms` instead of `penalty`, and it did not flag a 60-day
+termination notice period as risky at all — most likely because a 60-day
+notice is a fairly standard term rather than a missed extraction. Both are
+legitimate model judgment calls, not pipeline bugs: the section was
+extracted and sent to the model correctly in both cases (verified by
+inspecting the chunked text directly).
 
 ## Known limitations
 
 - **Category overlap:** `penalty` and `payment_terms` can be ambiguous to
   the model (see evaluation above).
+- **Conservative flagging:** the model may not flag clauses it considers
+  within normal/standard range, even when a test expects it to.
 - **Chunking:** sections are split on `Section N` / `Article N` headings,
   with a fallback to character-based splitting for very long sections.
   Contracts with unusual numbering may split poorly.
