@@ -1,46 +1,60 @@
+from pypdf import PdfReader
 import io
 import re
-from pypdf import PdfReader
 
-
-def extract_text(data: bytes) -> str:
-    reader = PdfReader(io.BytesIO(data))
+def extract_text(data: bytes) ->str:
+    reader=PdfReader(io.BytesIO(data))
     return "\n".join(p.extract_text() or "" for p in reader.pages).strip()
 
+def normalize(data: str) -> str:
+    s=re.sub("-\n","",data)
+    s=s.split()
+    s=" ".join(p for p in s)
+    return s.lower()
 
-def normalize(s: str) -> str:
-    """Collapse whitespace, fix hyphenated line breaks, lowercase.
-    Used for comparing model quotes against the source text."""
-    s = re.sub(r"-\n", "", s)
-    return " ".join(s.split()).lower()
-
-
-def _split_chars(text: str, max_chars: int, overlap: int) -> list[str]:
-    out, start = [], 0
-    while start < len(text):
-        end = min(start + max_chars, len(text))
-        out.append(text[start:end])
-        if end == len(text):
-            break
-        start = end - overlap
-    return out
-
-
-def chunk_text(text: str, max_chars: int = 6000, overlap: int = 500) -> list[str]:
-    # split before "Section 5" / "Article 5" headings
-    parts = re.split(r"(?=\n\s*(?:Section|Article)\s+\d+)", text, flags=re.IGNORECASE)
-    chunks, cur = [], ""
+def chunk_text(data: str)->list[str]:
+    parts= re.split(r"(?=Section \d+|Article \d+|Član \d+)", data, flags=re.IGNORECASE)
+    sections=[]
     for p in parts:
-        if len(p) > max_chars:  # single section too long -> fall back to char split
+        if p.strip():
+            sections.append(p)
+    return sections
+
+def pack(sections: list[str], max_chars: int, overlap: int) -> list[str]:
+    chunks = []
+    cur = ""
+    for s in sections:
+        if len(s)>max_chars:
             if cur:
                 chunks.append(cur)
-                cur = ""
-            chunks.extend(_split_chars(p, max_chars, overlap))
-        elif len(cur) + len(p) > max_chars:
-            chunks.append(cur)
-            cur = p
-        else:
-            cur += p
-    if cur.strip():
+                cur=""
+            chunks.extend(_split_chars(s,max_chars,overlap))
+        elif len(s)+len(cur)>max_chars:
+            if cur:
+                chunks.append(cur)
+            cur = s
+        else: 
+            cur+=s
+    if cur:
         chunks.append(cur)
     return chunks
+        
+def _split_chars(text: str, max_chars:int, overlap:int)->list[str]:
+    start=0
+    conclusion=[]
+    if overlap>=max_chars:
+        raise ValueError("Overlap must be smaller than max_chars!!!")
+    while start<len(text):
+        end=min(len(text),start+max_chars)
+        slice=text[start:end]
+        conclusion.append(slice)
+        if end==len(text):
+            break
+        start+=len(slice)-overlap
+    return conclusion
+
+def chunk(text:str, max_chars:int=6000, overlap:int=500)->list[str]:
+    return pack(chunk_text,max_chars,overlap)
+
+
+
