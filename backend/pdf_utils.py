@@ -54,7 +54,7 @@ def _split_chars(text: str, max_chars:int, overlap:int)->list[str]:
     return conclusion
 
 def chunk(text:str, max_chars:int=6000, overlap:int=500)->list[str]:
-    return pack(chunk_text,max_chars,overlap)
+    return pack(chunk_text(text),max_chars,overlap)
 
 
 
