@@ -22,29 +22,31 @@ def dedupe(findings: list[Finding]) -> list[Finding]:
             kept.append(f)
     return kept
 
+def analyze_text(text: str)->list[dict]:
+
+        parts=chunk(text)
+        findings=[]
+        for i,p in enumerate(parts,1):
+            print(f"chunk {i}/{len(parts)}...", file=sys.stderr)
+            result = analyze_chunk(p)
+            findings.extend(result.findings)
+
+        findings=dedupe(findings)
+        
+        source=squash(text)
+        out=[]
+
+        for f in findings:
+            d=f.model_dump()
+            d["hallucinated"]=squash(f.quote) not in source
+            out.append(d)
+        return out
 
 if __name__=="__main__":
     with open(sys.argv[1], "rb") as file:
         text=extract_text(file.read())
-    parts=chunk(text)
-    findings=[]
-    for i,p in enumerate(parts,1):
-        print(f"chunk {i}/{len(parts)}...", file=sys.stderr)
-        result = analyze_chunk(p)
-        findings.extend(result.findings)
-
-    findings=dedupe(findings)
-    
-    source=squash(text)
-    out=[]
-
-    for f in findings:
-        d=f.model_dump()
-        d["hallucinated"]=squash(f) not in source
-        out.append(d)
-
+    out=analyze_text(text)
     print(json.dumps(out, indent=2, ensure_ascii=False))
-
 
 
 
