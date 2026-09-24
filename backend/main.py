@@ -3,12 +3,20 @@ from pdf_utils import extract_text
 from cli import analyze_text
 import uuid
 import threading
+from fastapi.middleware.cors import CORSMiddleware
 
 MAX_SIZE=10*1024*1024
 JOBS = {}
 LOCK = threading.Lock()
 
 app=FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=['http://localhost:5173'],
+    allow_methods=['*'],
+    allow_headers=['*'],
+)
 
 @app.get("/jobs/{job_id}")
 def get_job(job_id: str):
