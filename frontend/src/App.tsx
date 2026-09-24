@@ -1,14 +1,23 @@
 import { useState } from 'react'
 
+type Finding = {
+  category:string,
+  severity:string,
+  quote:string,
+  explanation:string,
+  hallucinated:boolean
+}
+
 type Job = {
   status: string
   done?: number
   total?: number
-  result?: any[]
+  result?: Finding[]
   error?: string
 }
 
 function App() {
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const [file, setFile] = useState<File | null>(null)
   const [jobId, setJobId] = useState<string | null>(null)
   const [job, setJob] = useState<Job | null>(null)
@@ -26,6 +35,9 @@ function App() {
 
   async function handleUpload() {
     if (!file) return
+    setUploadError(null)
+    setJob(null)
+    setJobId(null)
 
     const form = new FormData()
     form.append("file", file)
@@ -34,6 +46,12 @@ function App() {
       body: form,
     })
     const data = await res.json()
+
+    if (!res.ok) {
+      setUploadError(data.detail)
+      return
+    }
+
     setJobId(data.job_id)
     pollJob(data.job_id)
   }
@@ -47,9 +65,20 @@ function App() {
         onChange={(e) => setFile(e.target.files?.[0] ?? null)}
       />
       <button disabled={!file} onClick={handleUpload}>Analyze</button>
+      {uploadError && <p>Error: {uploadError}</p>}
       {file && <p>{file.name}</p>}
       {jobId && <p>Job: {jobId}</p>}
-      {job && <p>Status: {job.status} {job.done}/{job.total}</p>}
+      {job?.status === "running" && <p>Analyzing {job.done}/{job.total}</p>}
+
+      {job?.status === "done" && job.result?.map((f, i)=> (
+        <div key={i}>
+          <strong>{f.category} ({f.severity})</strong>
+          <blockquote>{f.quote}</blockquote>
+          <p>{f.explanation}</p>
+          {f.hallucinated && <p>⚠ Quote not found in contract</p>}
+        </div>
+      ))}
+      {job?.status === "error" && <p> Error: {job.error}</p>}
     </>
   )
 }

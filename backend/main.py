@@ -4,6 +4,7 @@ from cli import analyze_text
 import uuid
 import threading
 from fastapi.middleware.cors import CORSMiddleware
+import requests
 
 MAX_SIZE=10*1024*1024
 JOBS = {}
@@ -36,6 +37,8 @@ def run_job(job_id: str, text: str):
         result = analyze_text(text, progress)
         with LOCK:
             JOBS[job_id] = {"status": "done","result": result}
+    except requests.ConnectionError:
+            JOBS[job_id] = {"status": "error","error": "Ollama is not running. Start it with Ollama serve."}
     except Exception as e:
         with LOCK:
             JOBS[job_id] = {"status": "error","error": str(e)}
