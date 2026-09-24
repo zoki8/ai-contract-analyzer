@@ -16,6 +16,18 @@ type Job = {
   error?: string
 }
 
+function severityColor(s: string): string {
+  if (s === "high") {
+    return "#e74c3c"
+  } else if (s === "medium") {
+    return "#f39c12"
+  } else if (s === "low") {
+    return "#27ae60"
+  } else {
+    return "#ccc"
+  }
+}
+
 function App() {
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [file, setFile] = useState<File | null>(null)
@@ -57,7 +69,7 @@ function App() {
   }
 
   return (
-    <>
+    <div className="container">
       <h1>Contract Analyzer</h1>
       <input
         type="file"
@@ -65,21 +77,31 @@ function App() {
         onChange={(e) => setFile(e.target.files?.[0] ?? null)}
       />
       <button disabled={!file} onClick={handleUpload}>Analyze</button>
-      {uploadError && <p>Error: {uploadError}</p>}
+      {uploadError && <p className="error">Error: {uploadError}</p>}
       {file && <p>{file.name}</p>}
       {jobId && <p>Job: {jobId}</p>}
-      {job?.status === "running" && <p>Analyzing {job.done}/{job.total}</p>}
+      {job?.status === "running" && (
+        <div>
+          <p>Analyzing {job.done}/{job.total} sections...</p>
+          <div className="progress">
+            <div
+              className="progress-bar"
+              style={{ width: `${job.total ? (job.done! / job.total) * 100 : 0}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {job?.status === "done" && job.result?.map((f, i)=> (
-        <div key={i}>
+        <div className="card" key={i} style={{ borderLeftColor: severityColor(f.severity) }}>
           <strong>{f.category} ({f.severity})</strong>
           <blockquote>{f.quote}</blockquote>
           <p>{f.explanation}</p>
-          {f.hallucinated && <p>⚠ Quote not found in contract</p>}
+          {f.hallucinated && <p className="warning">⚠ Quote not found in contract</p>}
         </div>
       ))}
-      {job?.status === "error" && <p> Error: {job.error}</p>}
-    </>
+      {job?.status === "error" && <p className="error"> Error: {job.error}</p>}
+    </div>
   )
 }
 

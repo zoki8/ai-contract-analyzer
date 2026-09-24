@@ -25,6 +25,8 @@ def dedupe(findings: list[Finding]) -> list[Finding]:
 def analyze_text(text: str, on_progress=None )->list[dict]:
 
         parts=chunk(text)
+        if on_progress:
+                on_progress(,len(parts))
         findings=[]
         for i,p in enumerate(parts,1):
             result = analyze_chunk(p)
