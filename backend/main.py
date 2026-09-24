@@ -19,9 +19,13 @@ def get_job(job_id: str):
 
 def run_job(job_id: str, text: str):
     with LOCK:
-        JOBS[job_id] = {"status": "running"}
+        JOBS[job_id] = {"status": "running","done":0, "total":0}
+    
+    def progress(i,n):
+        with LOCK:
+            JOBS[job_id]={"status":"running","done":i,"total":n}
     try:
-        result = analyze_text(text)
+        result = analyze_text(text, progress)
         with LOCK:
             JOBS[job_id] = {"status": "done","result": result}
     except Exception as e:

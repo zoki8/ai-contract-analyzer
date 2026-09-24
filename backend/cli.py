@@ -22,13 +22,14 @@ def dedupe(findings: list[Finding]) -> list[Finding]:
             kept.append(f)
     return kept
 
-def analyze_text(text: str)->list[dict]:
+def analyze_text(text: str, on_progress=None )->list[dict]:
 
         parts=chunk(text)
         findings=[]
         for i,p in enumerate(parts,1):
-            print(f"chunk {i}/{len(parts)}...", file=sys.stderr)
             result = analyze_chunk(p)
+            if on_progress:
+                on_progress(i,len(parts))
             findings.extend(result.findings)
 
         findings=dedupe(findings)
@@ -45,7 +46,7 @@ def analyze_text(text: str)->list[dict]:
 if __name__=="__main__":
     with open(sys.argv[1], "rb") as file:
         text=extract_text(file.read())
-    out=analyze_text(text)
+    out=analyze_text(text, lambda i,n: print(f"chunk {i}/{n}", file=sys.stderr))
     print(json.dumps(out, indent=2, ensure_ascii=False))
 
 
