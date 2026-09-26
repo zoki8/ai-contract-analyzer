@@ -1,3 +1,9 @@
-[
-  {"category": "termination", "quote_contains": "60 days written notice"}
-]
+{
+  "must_find": [],
+  "must_not_flag": [
+    {"quote_contains": "confidential for 3 years"},
+    {"quote_contains": "due within 30 days"},
+    {"quote_contains": "60 days written notice"},
+    {"quote_contains": "laws of Serbia"}
+  ]
+}

@@ -2,6 +2,7 @@ from pdf_utils import normalize,extract_text,chunk
 import sys
 from llm import analyze_chunk
 from schemas import Finding
+import json
 
 def squash(s: str)->str:
     return normalize(s).replace(" ","")
@@ -26,7 +27,7 @@ def analyze_text(text: str, on_progress=None )->list[dict]:
 
         parts=chunk(text)
         if on_progress:
-                on_progress(,len(parts))
+                on_progress(0,len(parts))
         findings=[]
         for i,p in enumerate(parts,1):
             result = analyze_chunk(p)

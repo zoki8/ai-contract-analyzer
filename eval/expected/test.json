@@ -1,6 +1,11 @@
-[
-  {"category": "auto_renewal", "quote_contains": "renews automatically"},
-  {"category": "penalty", "quote_contains": "5% per day"},
-  {"category": "termination", "quote_contains": "terminate this agreement at any time without notice"},
-  {"category": "liability", "quote_contains": "limited to 100 EUR"}
-]
+{
+  "must_find": [
+    {"category": "auto_renewal", "quote_contains": "renews automatically"},
+    {"category": "penalty", "quote_contains": "5% per day"},
+    {"category": "liability", "quote_contains": "limited to 100 EUR"},
+    {"category": "termination", "quote_contains": "without notice"}
+  ],
+  "must_not_flag": [
+    {"quote_contains": "due within 15 days"}
+  ]
+}
