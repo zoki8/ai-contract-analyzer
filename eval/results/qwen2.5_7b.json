@@ -1,0 +1,11 @@
+{
+  "model": "qwen2.5:7b",
+  "tp": 21,
+  "fn": 7,
+  "fp": 0,
+  "recall": 0.75,
+  "precision": 1.0,
+  "hallucinated": 1,
+  "seconds": 449,
+  "contracts": 10
+}

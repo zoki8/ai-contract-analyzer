@@ -1,0 +1,31 @@
+{
+  "source": "CUAD v1 (CC BY 4.0): TUNIUCORP_03_06_2014-EX-10-COOPERATION AGREEMENT",
+  "must_find": [
+    {
+      "category": "termination",
+      "quote_contains": [
+        "Party B shall have the right to terminate this Agreement in advance without the prior written consent from Party A, bysending a written notice to Party A but Party A may not terminate or rescind this Agreement;"
+      ]
+    },
+    {
+      "category": "liability",
+      "quote_contains": [
+        "Notwithstanding the foregoing provisions, neither Party shall be responsible to the other Party in respect of any indirect loss or damage caused hereunder.",
+        "The demand for liquidated damages and specific performance in respect of any breach during the Term of Cooperation are all remedies that the non-breaching Party shall have under this Agreement."
+      ]
+    },
+    {
+      "category": "penalty",
+      "quote_contains": [
+        "Except as otherwise agreed hereunder, if Party A or its subsidiaries fail to pay the Service Fee in full on schedule according to provisions of Article 4.1 and Article 4.2, then Party A or its subsidiaries shall, in addition to the continuance of the payment of Service Fee in full, it shall pay Party B the liquidated damages at a daily interest rate of 0.03% in respect of the outstanding Service Fee."
+      ]
+    }
+  ],
+  "must_not_flag": [
+    {
+      "quote_contains": [
+        "This Agreement shall be governed by and interpreted pursuant to the laws of the People's Republic of China that are promulgated and are publicly available, provided that the general international business practices shall apply if the laws of the People's Republic of China that are promulgated and are publicly available do not involve any matter in relation to this Agreement."
+      ]
+    }
+  ]
+}

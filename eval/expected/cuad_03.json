@@ -1,0 +1,31 @@
+{
+  "source": "CUAD v1 (CC BY 4.0): CENTRACKINTERNATIONALINC_10_29_1999-EX-10.3-WEB SITE HOSTING AGREEMENT",
+  "must_find": [
+    {
+      "category": "auto_renewal",
+      "quote_contains": [
+        "This Agreement shall automatically be renewed for one (1) or more one (1) month periods unless either the Customer or i-on gives notice to the other party of its intention not to renew the",
+        "Agreement, which notice must be given not less than fifteen (15) days before the end of the respective initial or renewal term."
+      ]
+    },
+    {
+      "category": "termination",
+      "quote_contains": [
+        "Either party may terminate this Agreement without cause at any time effective upon thirty (30) days' written notice."
+      ]
+    },
+    {
+      "category": "liability",
+      "quote_contains": [
+        "i-on will not be liable under any circumstances for any lost profits or other consequential damages, even if i-on has been advised as to the possibility of such damages. i-on's liability for damages to the Customer for any cause whatsoever, regardless of the form of action, and whether in contract or in tort, including negligence, shall be limited to one (1) month's fees and the remaining portion of any prepaid fees."
+      ]
+    }
+  ],
+  "must_not_flag": [
+    {
+      "quote_contains": [
+        "This Agreement was entered into in the State of Florida, and its validity, construction, interpretation, and legal effect shall be governed by the laws and judicial decisions of the State of Florida applicable to contracts entered into and performed entirely within the State of Florida."
+      ]
+    }
+  ]
+}

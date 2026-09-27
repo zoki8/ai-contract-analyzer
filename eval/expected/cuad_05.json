@@ -1,0 +1,30 @@
+{
+  "source": "CUAD v1 (CC BY 4.0): BravatekSolutionsInc_20170418_8-K_EX-10.1_10205739_EX-10.1_Reseller Agreement",
+  "must_find": [
+    {
+      "category": "auto_renewal",
+      "quote_contains": [
+        "Contract is renewable for 1 year extension by amendment to this agreement."
+      ]
+    },
+    {
+      "category": "termination",
+      "quote_contains": [
+        "Either Party may terminate this agreement for non-cause with a sixty (60) written notice."
+      ]
+    },
+    {
+      "category": "liability",
+      "quote_contains": [
+        "EXCEPT FOR IN THE EVENT OF WILLFUL MISCONDUCT OR GROSS NEGLIGENCE, THE RESELLER AND ITS AFFILIATES SHALL NOT BE LIABLE TO THE COMPANY, AND SHALL HAVE NO OBLIGATION TO INDEMNIFY OR HOLD HARMLESS THE COMPANY, WITH RESPECT TO OR IN CONNECTION WITH ANY LOSS RESULTING FROM OR CAUSED BY THE COMPANY PRODUCTS."
+      ]
+    }
+  ],
+  "must_not_flag": [
+    {
+      "quote_contains": [
+        "This Agreement shall be governed by and construed under the laws of the Commonwealth of Virginia without regard to the conflicts of law provisions thereof."
+      ]
+    }
+  ]
+}

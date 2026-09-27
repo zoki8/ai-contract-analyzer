@@ -148,6 +148,22 @@ def test_is_flagged_ignores_category_case_and_spacing():
     assert not is_flagged({"quote_contains": "laws of Serbia"}, FINDINGS)
 
 
+def test_is_found_accepts_a_list_of_alternatives():
+    expected = {"category": "penalty", "quote_contains": ["something else", "5% per day"]}
+    assert is_found(expected, FINDINGS)
+
+
+def test_is_found_when_model_quotes_part_of_a_longer_labelled_clause():
+    clause = "Late payment. The Client shall pay a penalty of 5% per day. Interest accrues monthly."
+    assert is_found({"category": "penalty", "quote_contains": clause}, FINDINGS)
+
+
+def test_a_very_short_model_quote_does_not_match_a_long_clause():
+    short = [{"category": "penalty", "quote": "5%"}]
+    clause = "The Client shall pay a penalty of 5% per day for late payment."
+    assert not is_found({"category": "penalty", "quote_contains": clause}, short)
+
+
 # ---------- API validation ----------
 
 client = TestClient(app)

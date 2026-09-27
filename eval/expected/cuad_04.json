@@ -1,0 +1,33 @@
+{
+  "source": "CUAD v1 (CC BY 4.0): LUCIDINC_04_15_2011-EX-10.9-DISTRIBUTOR AGREEMENT",
+  "must_find": [
+    {
+      "category": "auto_renewal",
+      "quote_contains": [
+        "After the initial term, unless terminated, this  Agreement will automatically renew for periods of one (1) calendar year each."
+      ]
+    },
+    {
+      "category": "termination",
+      "quote_contains": [
+        "Either party may terminate this agreement by providing Ninety days Written Notice."
+      ]
+    },
+    {
+      "category": "liability",
+      "quote_contains": [
+        "If Lucid accepts Distributor's order and fails to deliver ordered products,  Distributors sole remedy will be limited to refund of money paid to Lucid for any undelivered products.",
+        "Lucid will not have any liability or responsibility to Distributor or any other person or entity for any consequential, indirect, special, punitive or  incidental damages or lost profits, whether foreseeable or unforeseeable, based on\n\n\n\n\n\n     claims of Distributor or Distributor's customers (including but not limited to, claims for loss of data, goodwill, profits, use of money or use of  product, interruption in use or availability of data stoppage or other work or impairment or assets) arising out of breach or failure of express or  implied warranty, breach of contract, misrepresentation, negligence, strict liability in tort or otherwise, except only in the case of death or personal  injury where and to the extent that applicable law requires such liability.",
+        "If this Agreement is terminated Lucid shall not be liable for any incidental, indirect; special punitive of consequential damages of any kind,  including any perceived or real market development costs.",
+        "In no event will the aggregate liability incurred by Lucid in any action or  proceeding exceed the total amount actually paid to Lucid by Distributor for the purchase of the products that actually caused the damage or loss."
+      ]
+    }
+  ],
+  "must_not_flag": [
+    {
+      "quote_contains": [
+        "This Agreement shall be governed by and interpreted in accordance with the laws of the State of New York, USA without regard to conflict of  laws principles."
+      ]
+    }
+  ]
+}

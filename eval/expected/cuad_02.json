@@ -1,0 +1,30 @@
+{
+  "source": "CUAD v1 (CC BY 4.0): MphaseTechnologiesInc_20030911_10-K_EX-10.15_1560667_EX-10.15_Co-Branding Agreement",
+  "must_find": [
+    {
+      "category": "auto_renewal",
+      "quote_contains": [
+        "mPhase shall have the right to          annually renew this agreement for a period of one year upon each annual          expiration with the written consent of Lucent, which written consent          shall not be unreasonably withheld."
+      ]
+    },
+    {
+      "category": "termination",
+      "quote_contains": [
+        "Either party wishing to terminate          the Agreement must give written notice to the other party at least          thirty (30) days prior to the desired date of termination."
+      ]
+    },
+    {
+      "category": "liability",
+      "quote_contains": [
+        "Neither Party shall be liable to the other for special, incidental, or          consequential damages, even if such Party has been advised of the          possibility of such damages."
+      ]
+    }
+  ],
+  "must_not_flag": [
+    {
+      "quote_contains": [
+        "The validity, construction and performance of this Agreement shall be          governed by the laws of the State of New York."
+      ]
+    }
+  ]
+}

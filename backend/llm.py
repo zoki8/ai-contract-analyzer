@@ -23,6 +23,9 @@ SYSTEM = (
     "liability = limits or exclusions of a party's responsibility for damage "
     "or losses. "
     "other = risky clauses that fit none of the categories above. "
+    "Only report clauses that actually appear in the text. Never add placeholder "
+    "findings such as 'Not applicable'; if there is no risky clause, return an "
+    "empty findings list. "
     "Standard, fair and mutual clauses are NOT risky and must not be reported."
 )
 
