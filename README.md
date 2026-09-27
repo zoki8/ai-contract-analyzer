@@ -1,385 +1,369 @@
-# minishell.cpp
+# AI Contract Analyzer
 
-A small Unix-style command line interpreter written in C++17 and built around the command pattern.
-It has its own tokenizer and parser, one class per command and exception-based error reporting,
-and supports five built-in commands that read their text from quoted arguments, files or the
-keyboard.
+A local AI tool that reads a contract PDF and points out the clauses worth a second look before
+signing: penalties, payment terms, automatic renewal, termination and limitations of liability.
+Every finding comes with the exact quote from the contract, a severity and a plain-language
+explanation, and every quote is checked against the original text so the model cannot slip in a
+clause that is not there.
 
 ```
-$ echo "Hello world"
-Hello world
-$ wc -w "Lorem ipsum dolor sit amet"
-5
-$ time -h
-17
+$ python backend/cli.py eval/contracts/test.pdf
+chunk 1/1
+[
+  {
+    "category": "penalty",
+    "severity": "high",
+    "quote": "The Client shall pay a penalty of 5% per day for late payment.",
+    "explanation": "A daily penalty of 5% adds up quickly and can exceed the invoice amount.",
+    "hallucinated": false
+  },
+  ...
+]
 ```
 
-Built as a course project for Object-Oriented Programming 1 at the School of Electrical
-Engineering (ETF), University of Belgrade. This repository contains the **first phase** of the
-assignment: `echo`, `time`, `date`, `touch` and `wc`.
+The model runs **locally** through [Ollama](https://ollama.com), so the contract never leaves the
+machine. The pipeline is measured with its own evaluation script (recall, precision and
+hallucinated quotes) rather than judged by eye.
+
+> This is an automated analysis tool, not legal advice.
 
 ---
 
 ## Table of contents
 
 - [Features](#features)
-- [Build and run](#build-and-run)
-- [Command-line syntax](#command-line-syntax)
-- [Architecture](#architecture)
-- [How a line is processed](#how-a-line-is-processed)
-- [Command reference](#command-reference)
-- [Error handling](#error-handling)
-- [Project layout](#project-layout)
+- [How it works](#how-it-works)
+- [Tech stack](#tech-stack)
+- [Setup](#setup)
+- [Usage](#usage)
+- [API](#api)
+- [Evaluation](#evaluation)
+- [Project structure](#project-structure)
+- [Design decisions](#design-decisions)
 - [Known limitations](#known-limitations)
 
 ---
 
 ## Features
 
-- **5 commands**: `echo`, `time`, `date`, `touch`, `wc`
-- **Three input sources** for `echo` and `wc`: quoted text, a file, or the keyboard (until `Ctrl+D`)
-- **Options**: `wc -w` and `wc -c`, `time -h`, `-m` and `-s`
-- **Command pattern**: every command is its own class derived from an abstract `Command`
-- **Exception-based error reporting**: a failing command prints a message and never stops the
-  interpreter
-- **Configurable input source** through a `Reader` abstraction (console by default)
+- **Five risk categories**: `penalty`, `payment_terms`, `auto_renewal`, `termination`,
+  `liability`, plus `other` for risky clauses that fit none of them.
+- **Structured output**: the model is forced to answer in a fixed JSON schema, so every finding
+  has the same four fields and an unknown category is rejected.
+- **Hallucination check**: each quote is searched for in the original text; quotes that are not
+  there are flagged instead of silently shown to the user.
+- **Long contracts**: text is split on section headings (`Section`, `Article`, `Član`) and packed
+  into chunks that fit the model's context, with an overlapping character split as a fallback.
+- **Deduplication**: the same clause found in two overlapping chunks is reported once.
+- **Background jobs with progress**: the API returns a job id immediately and the web page shows a
+  progress bar while the contract is analyzed section by section.
+- **Input validation**: size limit, real PDF check and scanned-PDF detection, each with a clear
+  error message.
+- **Evaluation script** that reports recall, precision and hallucinated quotes on a labelled set
+  of contracts.
 
 ---
 
-## Build and run
-
-### Requirements
-
-- A C++17 compiler (GCC, Clang or MSVC)
-- CMake **3.10 or newer** (optional, a plain `g++` command works too)
-
-### Build with CMake
-
-```bash
-cmake -S . -B build
-cmake --build build
-./build/cmi
-```
-
-### Build with g++
-
-```bash
-g++ -Iinclude -Iinclude/Commands main.cpp src/*.cpp src/commands/*.cpp -o cmi
-./cmi
-```
-
-The interpreter starts with the prompt `$` and reads one command per line.
-
-> **Note:** there is no `exit` command. Close the interpreter with `Ctrl+C`.
-> See [Known limitations](#known-limitations).
-
----
-
-## Command-line syntax
-
-The general form of a command is:
-
-```
-command [-option] [argument]
-```
-
-A line is split into tokens on whitespace. For `echo` and `wc`, the argument decides where the
-input text comes from:
-
-| Argument | Input text | Example |
-|----------|------------|---------|
-| Quoted string | the text between the first and last `"` | `echo "hello world"` |
-| Unquoted name | the contents of that file | `echo input.txt` |
-| None | text typed on the keyboard until `Ctrl+D` | `echo` |
-
-### Quoting
-
-Text arguments are wrapped in double quotes. Everything between the first and the last quote on
-the line is taken literally, including spaces:
-
-```
-$ echo "literal   text"       # prints the string, spaces preserved
-literal   text
-$ echo data.txt               # prints the contents of data.txt
-```
-
----
-
-## Architecture
-
-The interpreter is a small pipeline: read a line, split it into tokens, build a command object,
-execute it. Only the parser knows about command names, and only the command objects know how to do
-their work.
+## How it works
 
 ```mermaid
 flowchart TD
-    subgraph MAIN["main() loop"]
-        PROMPT["print prompt"]
-        READ["Reader::getLine()"]
-        ISEOF{"end of input?"}
-        EMPTY{"empty line?"}
-        RUN["cmd->execute()"]
-        FREE["delete cmd"]
-        CATCH["catch CommandException<br/>print message"]
-    end
-
-    subgraph PARSE["Parser"]
-        TOK["tokenize()"]
-        SELECT["parseCommand()<br/>choose command by name"]
-        ARG["parseArg()<br/>resolve the input source"]
-    end
-
-    subgraph CMDS["Command objects"]
-        CMD["EchoCommand, wcCommand,<br/>TimeCommand, DateCommand,<br/>TouchCommand"]
-    end
-
-    PROMPT --> READ
-    READ --> ISEOF
-    ISEOF -->|"yes"| PROMPT
-    ISEOF -->|"no"| EMPTY
-    EMPTY -->|"yes"| PROMPT
-    EMPTY -->|"no"| TOK
-    TOK --> SELECT
-    SELECT -->|"unknown command"| PROMPT
-    SELECT -->|"echo, wc"| ARG
-    SELECT -->|"time, date, touch"| CMD
-    ARG --> CMD
-    CMD --> RUN
-    RUN --> FREE
-    FREE --> PROMPT
-    RUN -.->|"throws"| CATCH
-    CATCH --> PROMPT
+    A[PDF file] --> B[extract_text<br/>pypdf, pages joined by newlines]
+    B --> C[chunk_text<br/>split on Section / Article / Član headings]
+    C --> D[pack<br/>group sections into chunks up to 6000 chars]
+    D --> E{section longer<br/>than the limit?}
+    E -- yes --> F[_split_chars<br/>character split with 500-char overlap]
+    E -- no --> G[chunk]
+    F --> G
+    G --> H[analyze_chunk<br/>Ollama qwen2.5:7b, JSON schema, temperature 0]
+    H --> I[Pydantic validation<br/>ChunkAnalysis]
+    I --> J[dedupe<br/>same category + one quote inside the other]
+    J --> K[hallucination check<br/>quote found in source text?]
+    K --> L[findings as JSON]
 ```
 
-### Command pattern
+1. **Text extraction.** `pypdf` reads every page, and pages are joined with a newline so that a
+   heading at the top of a page is not glued to the last sentence of the previous one.
+2. **Chunking.** The model only sees a limited amount of text at once, so the contract is split in
+   front of every section heading. A lookahead regex keeps the heading inside its section, which
+   gives the model context ("Section 2. Payment"). Small sections are packed together into chunks
+   of up to 6000 characters to save model calls. A section that is longer than the limit on its own
+   is cut by characters with a 500-character overlap, so a short clause on the cut line is still
+   whole in at least one chunk.
+3. **Model call.** Each chunk is sent to a local model through Ollama's chat API. The Pydantic
+   schema is converted to JSON Schema and passed as `format`, which constrains the model's output
+   to that exact shape. `temperature: 0` makes the answers repeatable, which matters for
+   evaluation.
+4. **Validation.** The model's answer is parsed and validated with Pydantic. A category outside the
+   allowed list or a missing field raises an error instead of reaching the user.
+5. **Deduplication.** Overlapping chunks can report the same clause twice. Two findings are treated
+   as duplicates when they have the same category and one quote contains the other; the one with
+   the longer quote is kept.
+6. **Hallucination check.** Quotes and the source text are compared after "squashing" (lowercase,
+   rejoined hyphenated words, all whitespace removed), so a correct quote with different spacing
+   still matches. A quote that is not in the contract is marked `hallucinated: true`.
 
-Every command implements the abstract `Command` class. `Parser::parseCommand` picks the concrete
-class from the command name and returns a `Command*`, so `main` can execute any command without
-knowing which one it is.
+### Request flow in the web app
 
 ```mermaid
-classDiagram
-    class Command {
-        <<abstract>>
-        +execute()* void
-        +readFile(filename) string
-        +readfromStdin() string
-    }
+sequenceDiagram
+    participant U as Browser (React)
+    participant A as FastAPI
+    participant T as Background thread
+    participant O as Ollama
 
-    class EchoCommand {
-        -string text
-        -bool isfile
-        -bool usingStdin
-        +execute() void
-    }
-    class wcCommand {
-        -string t
-        -string text
-        -bool isfile
-        -bool usingStdin
-        -NumberOfWords(text) int
-        -NumberOfChars(text) int
-        +execute() void
-    }
-    class TimeCommand {
-        -string opt
-        +execute() void
-    }
-    class DateCommand {
-        +execute() void
-    }
-    class TouchCommand {
-        -string filename
-        +execute() void
-    }
+    U->>A: POST /analyze-contract (PDF)
+    A->>A: validate size, %PDF- header, text length
+    A->>T: start run_job(job_id, text)
+    A-->>U: { job_id }
+    loop every 1.5 s
+        U->>A: GET /jobs/{job_id}
+        A-->>U: { status, done, total }
+    end
+    T->>O: analyze each chunk
+    O-->>T: findings (JSON)
+    T->>A: JOBS[job_id] = done + result
+    U->>A: GET /jobs/{job_id}
+    A-->>U: { status: done, result }
+```
 
-    Command <|-- EchoCommand
-    Command <|-- wcCommand
-    Command <|-- TimeCommand
-    Command <|-- DateCommand
-    Command <|-- TouchCommand
+### Job states
 
-    class Parser {
-        +parseCommand(line) Command*
-        -tokenize(line) vector~string~
-        -parseArg(tokens, opt, line) Command*
-        -parseTime(cmd, tokens) Command*
-        -parseTouch(file) Command*
-    }
-    class Interpreter {
-        <<singleton>>
-        -char Sign
-        +getInstance() Interpreter*
-        +getSign() char
-        +setSign(S) void
-    }
-    class Reader {
-        #istream* input
-        +getLine() string
-        +isEof() bool
-    }
-    class ConsoleReader
-    class CommandException {
-        -string name
-        -bool isFile
-        +getMessage() string
-    }
-
-    Reader <|-- ConsoleReader
-    Parser ..> Command : creates
-    TouchCommand ..> CommandException : throws
+```mermaid
+stateDiagram-v2
+    [*] --> queued: POST accepted
+    queued --> running: thread starts
+    running --> running: chunk finished (done/total)
+    running --> done: all chunks analyzed
+    running --> error: Ollama down or invalid model output
+    done --> [*]
+    error --> [*]
 ```
 
 ---
 
-## How a line is processed
+## Tech stack
 
-1. `main` prints the prompt from `Interpreter::getSign()` and reads a line through
-   `Reader::getLine()`.
-2. Empty lines are skipped. On end of input the stream state is cleared and the loop continues.
-3. `Parser::parseCommand` splits the line into tokens and looks at the first one to pick a
-   command.
-4. For `echo` and `wc`, `Parser::parseArg` resolves where the input text comes from:
-
-```mermaid
-flowchart TD
-    A{"line contains<br/>a double quote?"}
-    B{"two or more quotes?"}
-    C{"echo: exactly 2 tokens<br/>wc: exactly 3 tokens?"}
-    D["text between the first<br/>and last quote"]
-    E["empty text"]
-    F["last token is a file name,<br/>read the file"]
-    G["read from the keyboard<br/>until Ctrl+D"]
-
-    A -->|"yes"| B
-    A -->|"no"| C
-    B -->|"yes"| D
-    B -->|"no"| E
-    C -->|"yes"| F
-    C -->|"no"| G
-```
-
-5. The parser returns a `Command*`. `main` calls `execute()` and then deletes the object.
-6. If `execute()` throws a `CommandException`, `main` prints its message and the loop goes on.
+| Layer | Tools |
+|---|---|
+| Backend | Python, FastAPI, Uvicorn, Pydantic, pypdf, requests |
+| Model | `qwen2.5:7b` through Ollama, running locally |
+| Frontend | React, TypeScript, Vite |
+| Evaluation | Plain Python script over labelled contracts |
 
 ---
 
-## Command reference
+## Setup
 
-| Command | Option | Input | Description |
-|---------|--------|-------|-------------|
-| `echo` | | quoted text, file or keyboard | Prints the input text |
-| `time` | `-h`, `-m`, `-s` (optional) | none | Prints the current time as `HH:MM:SS`, or only the hours, minutes or seconds |
-| `date` | | none | Prints the current date as `D.M.YYYY.` |
-| `touch` | | file name (required) | Creates an empty file |
-| `wc` | `-w` or `-c` (required) | quoted text, file or keyboard | Counts words (`-w`) or characters (`-c`) |
+Requirements: Python 3.11+, Node.js 18+ and [Ollama](https://ollama.com).
 
-### Examples
+**1. Model**
 
 ```bash
-# echo: quoted text, a file, or the keyboard
-$ echo "hello world"
-hello world
-$ echo input.txt              # prints the file
-$ echo                        # reads from the keyboard until Ctrl+D
-
-# time and date
-$ time
-17:43:16
-$ time -h
-17
-$ date
-20.9.2026.
-
-# wc: count words or characters
-$ wc -w "one two three"
-3
-$ wc -w input.txt
-5
-
-# touch
-$ touch made.txt
-$ touch made.txt
-File made.txt already exists
+ollama pull qwen2.5:7b
 ```
 
-### Reading from the keyboard
+**2. Backend**
 
-`echo` and `wc` fall back to `Command::readfromStdin()` when they get no argument. It reads lines
-until end of input, so finish with `Ctrl+D`:
-
+```bash
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
 ```
-$ wc -w
-these lines are
-collected until EOF
-^D
-5
+
+The interactive API docs are then available at http://localhost:8000/docs.
+
+**3. Frontend** (in a second terminal)
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open http://localhost:5173.
+
+---
+
+## Usage
+
+**Web app.** Choose a contract PDF, click **Analyze**, and watch the progress bar. When the
+analysis finishes, each finding is shown as a card whose left border is colored by severity
+(red = high, orange = medium, green = low). Findings whose quote was not found in the contract
+carry a warning.
+
+**Command line.** The same pipeline without the web layer:
+
+```bash
+cd backend
+python cli.py ../eval/contracts/test.pdf
+```
+
+Progress goes to `stderr` and the findings are printed to `stdout` as JSON, so the output can be
+redirected to a file:
+
+```bash
+python cli.py contract.pdf > findings.json
 ```
 
 ---
 
-## Error handling
+## API
 
-Errors are reported through `CommandException`. It is thrown as a pointer from inside a command
-and caught in `main`, which prints the message and deletes the exception, so a failing command
-never stops the interpreter.
+### `POST /analyze-contract`
 
-| Situation | Behaviour |
-|-----------|-----------|
-| `touch` on a file that already exists | `CommandException` is thrown, prints `File <name> already exists` |
-| `touch` cannot create the file | prints `Can not make a file.` |
-| Unknown command or wrong number of tokens | ignored, nothing is printed |
-| File given to `echo` or `wc` does not exist | treated as empty text |
+Multipart form upload with the PDF in the `file` field. Returns a job id immediately; the analysis
+runs in the background.
 
+```json
+{ "job_id": "948c524ed1414331a9592f10f12a7bfd" }
 ```
-$ touch a.txt
-$ touch a.txt
-File a.txt already exists
+
+| Code | When |
+|---|---|
+| `200` | Accepted, analysis started |
+| `400` | The file is not a PDF (does not start with `%PDF-`) |
+| `413` | The file is larger than 10 MB |
+| `422` | The PDF cannot be read, or it has almost no text (probably a scan) |
+
+### `GET /jobs/{job_id}`
+
+Returns the current state of a job.
+
+```json
+{ "status": "running", "done": 2, "total": 5 }
 ```
+
+```json
+{ "status": "done", "result": [ { "category": "penalty", "severity": "high", "quote": "...", "explanation": "...", "hallucinated": false } ] }
+```
+
+```json
+{ "status": "error", "error": "Ollama is not running. Start it with: ollama serve" }
+```
+
+Unknown ids return `404`.
 
 ---
 
-## Project layout
+## Evaluation
 
-```
-minishell.cpp/
-├── CMakeLists.txt
-├── main.cpp                     main loop and top-level exception handling
-├── include/
-│   ├── Command.h                abstract command interface and input helpers
-│   ├── Interpreter.h            singleton holding the command prompt
-│   ├── Parser.h                 tokenizer and command factory
-│   ├── Reader.h                 line input (Reader, ConsoleReader)
-│   ├── Exceptions.h             CommandException
-│   └── Commands/                one header per command
-│       ├── EchoCommand.h   TimeCommand.h   DateCommand.h
-│       └── TouchCommand.h  WcCommand.h
-├── src/
-│   ├── Command.cpp  Interpreter.cpp  Parser.cpp  Reader.cpp  Exception.cpp
-│   └── commands/                one implementation per command
-└── tests/                       sample input files and command scripts
+```bash
+cd backend
+python run_eval.py
 ```
 
-### Design notes
+The script runs the full pipeline on every PDF in `eval/contracts/` and compares the findings with
+the hand-labelled file of the same name in `eval/expected/`:
 
-- **Command pattern** keeps `main` free of per-command logic. Adding a command means adding a
-  class and one case in `Parser::parseCommand`.
-- **Shared input helpers** (`readFile`, `readfromStdin`) live in `Command`, so `echo` and `wc`
-  do not duplicate them.
-- **Singleton** `Interpreter` holds the prompt in one place.
-- **`Reader` abstraction** separates line input from the console, so another input source can be
-  added without touching `main`.
+```json
+{
+  "must_find": [
+    { "category": "penalty", "quote_contains": "5% per day" }
+  ],
+  "must_not_flag": [
+    { "quote_contains": "due within 15 days" }
+  ]
+}
+```
+
+- A **hit** is a `must_find` item for which the model returned a finding with the same category
+  and a quote containing `quote_contains`.
+- A **miss** is a `must_find` item the model did not return.
+- A **false alarm** is a `must_not_flag` clause (a normal, fair clause) that the model reported as
+  risky, in any category.
+
+From these the script reports **recall** (how many real risks were found), **precision** (how many
+reported clauses were really risky) and the number of hallucinated quotes.
+
+The set has two contracts: one with four risky clauses and one control contract with only standard,
+mutual clauses, used to check that the model does not invent problems.
+
+### Results
+
+| Prompt version | Recall | Precision | Hallucinated quotes |
+|---|---|---|---|
+| Categories only listed | 3/4 (75%) | 3/3 (100%) | 0 |
+| Categories defined, with the penalty / payment boundary | **4/4 (100%)** | **4/4 (100%)** | 0 |
+
+The first run showed a single, specific error: a late-payment penalty was classified as
+`payment_terms` instead of `penalty`. The clause was found, but in the wrong category. The prompt
+only listed the categories, and "a penalty for late payment" fits both. Adding a one-sentence
+definition for each category, and stating explicitly that late-payment penalties belong to
+`penalty`, fixed the miss without adding any false alarms on the control contract.
+
+These numbers come from a very small set, and the prompt was tuned while looking at it, so they
+show that the fix worked on the known case, not how well the tool generalizes. See
+[Known limitations](#known-limitations).
+
+---
+
+## Project structure
+
+```
+ai-contract-analyzer/
+├── backend/
+│   ├── pdf_utils.py     # text extraction, normalization, chunking
+│   ├── schemas.py       # Pydantic models: Finding, ChunkAnalysis
+│   ├── llm.py           # Ollama call, prompt, structured output
+│   ├── cli.py           # squash, dedupe, analyze_text pipeline, CLI entry point
+│   ├── main.py          # FastAPI app: validation, background jobs, CORS
+│   ├── run_eval.py      # recall / precision / hallucination evaluation
+│   └── requirements.txt
+├── eval/
+│   ├── contracts/       # test contracts (PDF)
+│   └── expected/        # hand-labelled must_find / must_not_flag per contract
+└── frontend/
+    └── src/
+        ├── App.tsx      # upload, polling, progress bar, finding cards
+        └── index.css
+```
+
+The pipeline lives in one function, `analyze_text()` in `cli.py`. The command line tool, the API
+and the evaluation script all call it, so the evaluation measures exactly the code the app runs.
+It takes an optional `on_progress(done, total)` callback: the CLI uses it to print progress, and
+the API uses it to update the job's progress bar.
+
+---
+
+## Design decisions
+
+**Local model instead of a cloud API.** Contracts contain names, amounts and terms that people
+often cannot or do not want to send to a third party. A local model keeps the document on the
+machine, costs nothing per call (so the evaluation can be rerun freely) and does not change
+behind the scenes. The trade-off is a weaker and slower model than the largest cloud ones. All
+model access is isolated in `llm.py`, so swapping in another model or provider touches one file.
+
+**Schema-constrained output.** Asking a model for "JSON please" still produces broken or
+inconsistent answers. Passing the Pydantic schema to Ollama restricts what the model can generate,
+and validating the answer with the same schema catches anything that still goes wrong.
+
+**Flag, do not delete, suspicious quotes.** A quote that is not in the contract is kept and marked,
+so the user sees that something was found but should be double-checked.
+
+**Background thread instead of a long request.** Analysis can take minutes on a long contract.
+Returning a job id right away and polling avoids request timeouts and lets the page show progress.
+Jobs are stored in a dictionary protected by a `threading.Lock`, which is held only while the
+dictionary is read or written, never during the model call.
+
+**Validation before the expensive work.** Size and the `%PDF-` header are checked first, then text
+extraction, and only then the model. The file is read with a limit of 10 MB + 1 byte, so an
+oversized upload is rejected without loading all of it into memory.
 
 ---
 
 ## Known limitations
 
-- **No exit command.** At end of input (`Ctrl+D` at the prompt) the loop clears the stream state
-  and continues. Close the program with `Ctrl+C`.
-- **Unknown or malformed commands are silently ignored**, with no error message.
-- **Input is limited to 512 characters** (quoted text, file contents and keyboard input).
-- **A non-existent file** is treated as empty text by `echo` and `wc`, with no error message.
-- **`wc -c` counts only non-whitespace characters**, not all characters in the text.
-- **`wc` with an unknown option** prints nothing.
-- **Redirection and pipes are not implemented** (second phase of the assignment): `echo "a" > x.txt`
-  prints `a` on the screen and does not create a file.
+- **Small evaluation set.** Two contracts and four labelled risks are enough to catch a specific
+  error, not to measure real-world accuracy. The prompt was adjusted while looking at this set.
+- **Scanned PDFs are not supported.** There is no OCR; a scan is rejected with a `422` message.
+- **Jobs live in memory.** Restarting the server loses all jobs, and there is no limit on how many
+  analyses run at the same time.
+- **Heading detection is simple.** The section regex also matches a heading word that appears in
+  the middle of a sentence ("as described in Section 3"), which can split a clause.
+- **Mostly tested on English contracts.** Serbian headings (`Član`) are recognized when chunking,
+  but the evaluation set does not yet contain Serbian contracts.
+- **Not legal advice.** The tool helps a reader focus on the right clauses; it does not replace a
+  lawyer.
