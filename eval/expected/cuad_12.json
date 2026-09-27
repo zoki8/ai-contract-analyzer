@@ -1,0 +1,32 @@
+{
+  "source": "CUAD v1 (CC BY 4.0): ETELOS,INC_03_09_2004-EX-10.8-DISTRIBUTOR AGREEMENT",
+  "must_find": [
+    {
+      "category": "auto_renewal",
+      "quote_contains": [
+        "The terms of this Agreement shall be one year from the effective date and will be automatically renewed on each anniversary of the effective date, for a renewal term of one year unless either party provides written notification of its intention not to renew this Agreement at least one month prior to the expiration of the initial or any renewal terms."
+      ]
+    },
+    {
+      "category": "termination",
+      "quote_contains": [
+        "Tripath or Distributor may terminate this Agreement for any reason with thirty days written notice."
+      ]
+    },
+    {
+      "category": "liability",
+      "quote_contains": [
+        "The foregoing provisions of this section 19 state the entire liability and obligations of Tripath and the exclusive remedy of Distributor and its customers, with respect to any actual or alleged intellectual property infringement by the Products.",
+        "Neither Tripath nor Distributor will be liable for any incidental or consequential",
+        "damages (including, without limitation, damages for loss of business profits, business interruption, loss of business information, or other pecuniary loss) arising out of this Agreement, even if advised of the possibility of such damages."
+      ]
+    }
+  ],
+  "must_not_flag": [
+    {
+      "quote_contains": [
+        "This Agreement will be governed by the laws of California, without reference to conflicts of laws."
+      ]
+    }
+  ]
+}

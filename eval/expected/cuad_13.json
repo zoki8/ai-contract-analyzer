@@ -1,0 +1,30 @@
+{
+  "source": "CUAD v1 (CC BY 4.0): KUBIENT,INC_07_02_2020-EX-10.14-MASTER SERVICES AGREEMENT_Part1",
+  "must_find": [
+    {
+      "category": "auto_renewal",
+      "quote_contains": [
+        "This Agreement will automatically renew for additional 1-year terms unless earlier terminated pursuant to this Agreement's express provisions (together with the Initial Term, such additional periods the \"Term\")."
+      ]
+    },
+    {
+      "category": "termination",
+      "quote_contains": [
+        "Either Party may terminate this Agreement for any reason following the Initial Term upon ninety (90) days written notice to the other Party."
+      ]
+    },
+    {
+      "category": "liability",
+      "quote_contains": [
+        "EXCEPT WITH RESPECT TO THE PARTIES' LIABILITY FOR INDEMNIFICATION, OR LIABILITY FOR BREACH OF CONFIDENTIALITY, NEITHER PARTY SHALL BE LIABLE FOR ANY CONSEQUENTIAL, INCIDENTAL, INDIRECT, PUNITIVE, SPECIAL OR OTHER SIMILAR DAMAGES, WHETHER OR NOT CAUSED BY THE OTHER PARTY'S EMPLOYEES OR REPRESENTATIVES„ WHETHER UNDER TORT (INCLUDING NEGLIGENCE), CONTRACT OR OTHER THEORIES OF RECOVERY, EVEN IF THE OTHER PARTY WAS OR SHOULD HAVE BEEN AWARE OR WAS ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. 8. Arbitration."
+      ]
+    }
+  ],
+  "must_not_flag": [
+    {
+      "quote_contains": [
+        "This Agreement is governed in all respects by the laws of the State of Delaware without giving effect to its conflict of laws principles."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "source": "CUAD v1 (CC BY 4.0): MEDALISTDIVERSIFIEDREIT,INC_05_18_2020-EX-10.1-CONSULTING AGREEMENT",
+  "must_find": [
+    {
+      "category": "auto_renewal",
+      "quote_contains": [
+        "Term: twelve (12) months from the date of the Agreement which term shall automatically renew for an additional twelve (12) months on such date if the Agreement is not otherwise terminated according to Section 8 of the Agreement."
+      ]
+    },
+    {
+      "category": "termination",
+      "quote_contains": [
+        "(c) ninety (90) days following the date the Company gives CONSULTANT written notice of termination for any or no reason; or (d) CONSULTANT may terminate this Agreement by giving ninety (90) days' written notice to REIT.",
+        "This Agreement shall terminate immediately upon the occurrence of any of the following events:"
+      ]
+    },
+    {
+      "category": "penalty",
+      "quote_contains": [
+        "In the event of a 'Change of Control' of Company, then if CONSULTANT's services are terminated without cause at any time within a twelve (12) month period following such Change of Control, CONSULTANT shall receive a termination fee equal to twelve (12) months compensation hereunder at the then current monthly rate, including any stock compensation."
+      ]
+    }
+  ],
+  "must_not_flag": [
+    {
+      "quote_contains": [
+        "This Agreement shall be interpreted, construed, governed, and enforced according to the laws of the Commonwealth of Virginia, without giving effect to its conflict of laws principles."
+      ]
+    }
+  ]
+}

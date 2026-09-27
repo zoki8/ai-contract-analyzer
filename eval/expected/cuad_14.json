@@ -1,0 +1,31 @@
+{
+  "source": "CUAD v1 (CC BY 4.0): SPARKLINGSPRINGWATERHOLDINGSLTD_07_03_2002-EX-10.13-SOFTWARE LICENSE AND MAINTENANCE AGREEMENT",
+  "must_find": [
+    {
+      "category": "auto_renewal",
+      "quote_contains": [
+        "For a renewable one-year term commencing upon the Maintenance Commencement Date, subject to payment of maintenance fees in accordance with the Fee Schedule but without additional fees or charges, Garman shall provide the following Maintenance Services:"
+      ]
+    },
+    {
+      "category": "termination",
+      "quote_contains": [
+        "Sparkling may terminate this Agreement at any time upon ninety (90) calendar days written notice to Garman."
+      ]
+    },
+    {
+      "category": "liability",
+      "quote_contains": [
+        "In no event shall either party be liable to the other for the recovery of any special, indirect or consequential damages even if the defendant party had been advised of the possibility of such damages including but not limited to lost profits, lost revenues, failure to realize expected savings, loss of data and loss of use.",
+        "The exclusive remedy of either party in a claim against the other under this Agreement shall be the recovery of its direct damages."
+      ]
+    }
+  ],
+  "must_not_flag": [
+    {
+      "quote_contains": [
+        "This Agreement shall be governed by the laws of Nova Scotia and the laws of Canada applicable in Nova Scotia."
+      ]
+    }
+  ]
+}

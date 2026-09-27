@@ -1,0 +1,30 @@
+{
+  "source": "CUAD v1 (CC BY 4.0): ICORECONNECTINC_10_13_2010-EX-7.1-Strategic Alliance Agreement",
+  "must_find": [
+    {
+      "category": "auto_renewal",
+      "quote_contains": [
+        "Thereafter, this Agreement shall be renewed automatically on a five (5) year basis, unless one party notifies the other of its desire to terminate this Agreement at least sixty 90 days prior to the expiration of the Initial Term or then current renewal term, as applicable, or unless a new Agreement is signed between the USA MCO and IMedicor which will then invalidate this Agreement."
+      ]
+    },
+    {
+      "category": "termination",
+      "quote_contains": [
+        "Both parties may terminate this Agreement upon ninety (\"90\") days written notice to the other party at the address stated in this Agreement as per section 3 above."
+      ]
+    },
+    {
+      "category": "liability",
+      "quote_contains": [
+        "Both parties will not have liability for any damages other than direct damages."
+      ]
+    }
+  ],
+  "must_not_flag": [
+    {
+      "quote_contains": [
+        "This Agreement shall be governed by the internal laws State of New York."
+      ]
+    }
+  ]
+}

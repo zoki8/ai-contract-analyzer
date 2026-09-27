@@ -1,0 +1,31 @@
+{
+  "source": "CUAD v1 (CC BY 4.0): OMINTO,INC_03_29_2004-EX-10-RESELLER AGREEMENT",
+  "must_find": [
+    {
+      "category": "auto_renewal",
+      "quote_contains": [
+        "This Agreement shall      renew for successive 1-year periods, after the initial 1 Year Term, if      agreed by both parties in writing within 30 days of license expiration."
+      ]
+    },
+    {
+      "category": "termination",
+      "quote_contains": [
+        "Either party may terminate the Agreement on 60-days written notice during a      renewed term.",
+        "The Reseller Agreement can be terminated at any time at the discretion of either party."
+      ]
+    },
+    {
+      "category": "liability",
+      "quote_contains": [
+        "IN NO EVENT SHALL EITHER PARTY BE LIABLE TO EACH OTHER OR ANY OTHER ENTITY FOR ANY SPECIAL, CONSEQUENTIAL, INCIDENTAL OR INDIRECT DAMAGES, HOWEVER CAUSED, ON ANY THEORY OF LIABILITY, AND NOTWITHSTANDING ANY FAILURE OF ESSENTIAL PURPOSE OF ANY LIMITED REMEDY."
+      ]
+    }
+  ],
+  "must_not_flag": [
+    {
+      "quote_contains": [
+        "The laws of the State of Florida shall govern this      Agreement, without reference to conflicts of law provisions."
+      ]
+    }
+  ]
+}
