@@ -3,6 +3,7 @@ import sys
 from llm import analyze_chunk
 from schemas import Finding
 import json
+from difflib import SequenceMatcher
 
 def squash(s: str)->str:
     return normalize(s).replace(" ","")
@@ -42,9 +43,27 @@ def analyze_text(text: str, on_progress=None )->list[dict]:
 
         for f in findings:
             d=f.model_dump()
-            d["hallucinated"]=squash(f.quote) not in source
+            d["hallucinated"] = not appears_in(squash(f.quote), source)            
             out.append(d)
         return out
+
+MIN_FUZZY = 20      # quotes shorter than this must match exactly
+SIMILARITY = 0.9    # share of characters that must agree for a near-verbatim quote
+
+
+def appears_in(quote: str, text: str) -> bool:
+    """True if quote appears in text word for word, or almost word for word.
+    Both arguments are expected to be squashed."""
+    if quote in text:
+        return True
+    if len(quote) < MIN_FUZZY:
+        return False
+    anchor = SequenceMatcher(None, text, quote, autojunk=False).find_longest_match(
+        0, len(text), 0, len(quote)
+    )
+    start = max(0, anchor.a - anchor.b)
+    window = text[start : start + len(quote) + len(quote) // 10]
+    return SequenceMatcher(None, window, quote, autojunk=False).ratio() >= SIMILARITY
 
 if __name__=="__main__":
     with open(sys.argv[1], "rb") as file:

@@ -50,7 +50,6 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("data_zip")
     parser.add_argument("--n", type=int, default=8)
-    parser.add_argument("--max-chars", type=int, default=MAX_CHARS)
     args = parser.parse_args()
 
     with zipfile.ZipFile(args.data_zip) as z:
@@ -62,7 +61,7 @@ def main():
         text = paragraph["context"]
         spans = labelled_spans(paragraph)
         hits = [c for c in CATEGORY_MAP if c in spans]
-        if len(text) <= args.max_chars and len(hits) >= MIN_HITS and NOT_RISKY in spans:
+        if len(text) <= MAX_CHARS and len(hits) >= MIN_HITS and NOT_RISKY in spans:
             candidates.append((len(text), contract["title"], text, spans))
 
     candidates.sort()  # shortest first

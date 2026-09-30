@@ -14,7 +14,7 @@ import os
 import time
 
 import llm
-from cli import analyze_text, squash
+from cli import analyze_text, appears_in, squash
 from pdf_utils import extract_text
 
 MIN_REVERSE = 20  # a model quote this long may match by being inside the expected clause
@@ -30,7 +30,7 @@ def quotes_match(expected_quote: str, model_quote: str) -> bool:
     """Match when the expected text is inside the model's quote, or when the
     model quoted a meaningful part of a longer labelled clause."""
     e, m = squash(expected_quote), squash(model_quote)
-    return e in m or (len(m) >= MIN_REVERSE and m in e)
+    return e in m or (len(m) >= MIN_REVERSE and appears_in(m, e))
 
 
 def is_found(expected: dict, findings: list[dict]) -> bool:

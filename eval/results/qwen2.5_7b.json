@@ -1,11 +1,11 @@
 {
   "model": "qwen2.5:7b",
-  "tp": 34,
-  "fn": 18,
+  "tp": 35,
+  "fn": 17,
   "fp": 0,
-  "recall": 0.6538461538461539,
+  "recall": 0.6730769230769231,
   "precision": 1.0,
-  "hallucinated": 6,
-  "seconds": 901,
+  "hallucinated": 2,
+  "seconds": 1244,
   "contracts": 18
 }

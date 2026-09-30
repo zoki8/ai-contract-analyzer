@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from cli import dedupe, squash
+from cli import appears_in, dedupe, squash
 from main import MAX_SIZE, app
 from pdf_utils import _split_chars, chunk, chunk_text, extract_text, normalize, pack
 from run_eval import is_flagged, is_found
@@ -193,3 +193,29 @@ def test_api_accepts_real_pdf_and_returns_job_id():
 
 def test_api_unknown_job_is_404():
     assert client.get("/jobs/does-not-exist").status_code == 404
+
+
+# ---------- near-verbatim quotes ----------
+
+SOURCE = squash(
+    "12. Term. This Agreement shall automatically be renewed for one (1) or more "
+    "one (1) month periods unless either party gives written notice of non-renewal."
+)
+
+
+def test_appears_in_accepts_exact_quote():
+    assert appears_in(squash("automatically be renewed for one (1) or more"), SOURCE)
+
+
+def test_appears_in_accepts_quote_with_one_word_changed():
+    quote = "This Agreement will automatically be renewed for one (1) or more one (1) month periods"
+    assert appears_in(squash(quote), SOURCE)
+
+
+def test_appears_in_rejects_invented_sentence():
+    assert not appears_in(squash("Not applicable in the provided text."), SOURCE)
+    assert not appears_in(squash("The Supplier may terminate at any time without notice."), SOURCE)
+
+
+def test_appears_in_short_quote_must_be_exact():
+    assert not appears_in(squash("one (2) month"), SOURCE)
