@@ -3,3 +3,6 @@ __pycache__/
 node_modules/
 .env
 *.pyc
+backend/build/
+backend/dist/
+backend/*.spec
