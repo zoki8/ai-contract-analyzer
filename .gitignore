@@ -6,3 +6,5 @@ node_modules/
 backend/build/
 backend/dist/
 backend/*.spec
+frontend/src-tauri/binaries/
+frontend/src-tauri/binaries/
