@@ -1,0 +1,11 @@
+{
+  "model": "qwen2.5:3b",
+  "tp": 29,
+  "fn": 23,
+  "fp": 3,
+  "recall": 0.5576923076923077,
+  "precision": 0.90625,
+  "hallucinated": 13,
+  "seconds": 564,
+  "contracts": 18
+}
