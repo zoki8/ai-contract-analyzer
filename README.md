@@ -1,4 +1,4 @@
-# AI Contract Analyzer
+# Clausewise
 
 A local AI tool that reads a contract PDF and points out the clauses worth a second look before
 signing: penalties, payment terms, automatic renewal, termination and limitations of liability.
@@ -367,3 +367,17 @@ oversized upload is rejected without loading all of it into memory.
   but the evaluation set does not yet contain Serbian contracts.
 - **Not legal advice.** The tool helps a reader focus on the right clauses; it does not replace a
   lawyer.
+
+
+---
+
+## Data and license
+
+The evaluation set includes 16 contracts from the
+[Contract Understanding Atticus Dataset (CUAD) v1](https://www.atticusprojectai.org/cuad),
+created by The Atticus Project and licensed under
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+The contracts are real commercial agreements from public SEC EDGAR filings, and the clause
+labels were made by lawyers. `backend/import_cuad.py` selects the contracts and converts the
+CUAD labels into this project's categories: Renewal Term → `auto_renewal`, Termination For
+Convenience → `termination`, Cap On Liability → `liability`, Liquidated Damages → `penalty`.
