@@ -21,3 +21,5 @@ pytest
 httpx
 pytest
 httpx2
+pytest
+httpx2
