@@ -6,7 +6,7 @@ import re
 # na početku teksta ili odmah posle kraja rečenice. Upućivanja tipa
 # "see Section 5" se ne seku.
 HEADING_SPLIT = re.compile(
-    r"(?:(?<=[.;:])|^)(?=\s*(?:Section|Article|Član)\s+\d+)",
+    r"(?:(?<=[.;:])|(?<=\n)|^)(?=\s*(?:Section|Article|Član)\s+\d+)",
     flags=re.IGNORECASE,
 )
 

@@ -63,7 +63,6 @@ def test_chunk_text_loses_no_text():
     assert "".join(chunk_text(text)) == text
 
 
-@pytest.mark.xfail(reason="known limitation: a heading mentioned inside a sentence also splits")
 def test_chunk_text_does_not_split_on_mid_sentence_reference():
     text = "Section 4. Termination\nThe Supplier may terminate as described in Section 2 above."
     assert len(chunk_text(text)) == 1

@@ -19,3 +19,5 @@ urllib3==2.8.0
 uvicorn==0.53.0
 pytest
 httpx
+pytest
+httpx2
