@@ -487,7 +487,10 @@ timeouts and lets the window show progress. Jobs are stored in a dictionary guar
 ---
 
 ## Known limitations
-
+- **Heading detection:** headings are split only after sentence-ending
+  punctuation or a newline. Because text is normalized to one line before
+  chunking, a heading preceded by a title (e.g. "TERMINATION Section 7")
+  may not be split.
 - **Small evaluation set.** 16 CUAD contracts and 52 labelled clauses are enough to find patterns,
   not to give a precise accuracy. One clause more or less moves recall on the held-out set by 4
   points.

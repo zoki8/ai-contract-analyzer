@@ -1,6 +1,6 @@
 from pdf_utils import normalize,extract_text,chunk
 import sys
-from llm import analyze_chunk
+from llm import analyze_chunk, ChunkAnalysisError
 from schemas import Finding
 import json
 from difflib import SequenceMatcher
@@ -24,28 +24,35 @@ def dedupe(findings: list[Finding]) -> list[Finding]:
             kept.append(f)
     return kept
 
-def analyze_text(text: str, on_progress=None )->list[dict]:
-
-        parts=chunk(text)
-        if on_progress:
-                on_progress(0,len(parts))
-        findings=[]
-        for i,p in enumerate(parts,1):
+def analyze_text(text: str, on_progress=None, failed_chunks: list[int] | None = None)->list[dict]:
+    """Analyze a contract. Chunks that still fail after all LLM retries are skipped;
+    their 1-based numbers are appended to failed_chunks (if a list is passed in)."""
+    parts=chunk(text)
+    if on_progress:
+        on_progress(0,len(parts))
+    findings=[]
+    for i,p in enumerate(parts,1):
+        try:
             result = analyze_chunk(p)
-            if on_progress:
-                on_progress(i,len(parts))
+        except ChunkAnalysisError as e:
+            if failed_chunks is not None:
+                failed_chunks.append(i)
+            print(f"chunk {i}/{len(parts)} skipped: {e}", file=sys.stderr)
+        else:
             findings.extend(result.findings)
+        if on_progress:
+            on_progress(i,len(parts))
 
-        findings=dedupe(findings)
-        
-        source=squash(text)
-        out=[]
+    findings=dedupe(findings)
 
-        for f in findings:
-            d=f.model_dump()
-            d["hallucinated"] = not appears_in(squash(f.quote), source)            
-            out.append(d)
-        return out
+    source=squash(text)
+    out=[]
+
+    for f in findings:
+        d=f.model_dump()
+        d["hallucinated"] = not appears_in(squash(f.quote), source)
+        out.append(d)
+    return out
 
 MIN_FUZZY = 20      # quotes shorter than this must match exactly
 SIMILARITY = 0.9    # share of characters that must agree for a near-verbatim quote
@@ -68,9 +75,8 @@ def appears_in(quote: str, text: str) -> bool:
 if __name__=="__main__":
     with open(sys.argv[1], "rb") as file:
         text=extract_text(file.read())
-    out=analyze_text(text, lambda i,n: print(f"chunk {i}/{n}", file=sys.stderr))
+    failed=[]
+    out=analyze_text(text, lambda i,n: print(f"chunk {i}/{n}", file=sys.stderr), failed)
+    if failed:
+        print(f"WARNING: {len(failed)} chunk(s) could not be analyzed: {failed}", file=sys.stderr)
     print(json.dumps(out, indent=2, ensure_ascii=False))
-
-
-
-
