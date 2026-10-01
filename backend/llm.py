@@ -1,8 +1,13 @@
 import requests
 from schemas import ChunkAnalysis
+import time
+from pydantic import ValidationError
+
 
 OLLAMA_URL = "http://localhost:11434/api/chat"
 MODEL = "qwen2.5:7b"
+MAX_ATTEMPTS = 3
+
 
 SYSTEM = (
     "You are a contract review assistant. From the given part of a contract, "
@@ -29,18 +34,56 @@ SYSTEM = (
     "Standard, fair and mutual clauses are NOT risky and must not be reported."
 )
 
-def analyze_chunk(text: str)->ChunkAnalysis:
-    payload = {
-        "model":MODEL,
-        "stream":False,
-        "format":ChunkAnalysis.model_json_schema(),
-        "options": {"num_ctx":8192,"temperature":0},
-        "messages":[
-            {"role": "system" , "content" : SYSTEM},
-            {"role": "user" , "content" : text}
-        ]
-    }
-    r=requests.post(OLLAMA_URL, json=payload, timeout=300)
-    r.raise_for_status()
-    return ChunkAnalysis.model_validate_json(r.json()["message"]["content"])
 
+class ChunkAnalysisError(Exception):
+    """Odeljak nije uspeo da se analizira ni posle svih pokušaja."""
+
+
+def analyze_chunk(text: str) -> ChunkAnalysis:
+    messages = [
+        {"role": "system", "content": SYSTEM},
+        {"role": "user", "content": text},
+    ]
+    last_error = None
+
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        payload = {
+            "model": MODEL,
+            "stream": False,
+            "format": ChunkAnalysis.model_json_schema(),
+            "options": {"num_ctx": 8192, "temperature": 0},
+            "messages": messages,
+        }
+
+        # 1) poziv Ollame (mrežne greške, timeout, loš HTTP status)
+        try:
+            r = requests.post(OLLAMA_URL, json=payload, timeout=300)
+            r.raise_for_status()
+            content = r.json()["message"]["content"]
+        except (requests.RequestException, KeyError, ValueError) as e:
+            last_error = e
+            if attempt < MAX_ATTEMPTS:
+                time.sleep(2 ** attempt)  # 2s, 4s
+            continue
+
+        # 2) validacija odgovora
+        try:
+            return ChunkAnalysis.model_validate_json(content)
+        except ValidationError as e:
+            last_error = e
+            # model vidi svoj loš odgovor i grešku, pa ima šta da ispravi
+            messages = messages + [
+                {"role": "assistant", "content": content},
+                {
+                    "role": "user",
+                    "content": (
+                        "Your previous answer was invalid: "
+                        f"{str(e)[:500]}\n"
+                        "Return corrected JSON that matches the schema."
+                    ),
+                },
+            ]
+
+    raise ChunkAnalysisError(
+        f"Failed after {MAX_ATTEMPTS} attempts: {last_error}"
+    )
