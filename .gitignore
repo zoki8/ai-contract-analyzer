@@ -8,3 +8,5 @@ backend/dist/
 backend/*.spec
 frontend/src-tauri/binaries/
 frontend/src-tauri/binaries/
+jobs.dbbackend/jobs.db
+backend/jobs.db

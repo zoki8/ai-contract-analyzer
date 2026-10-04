@@ -19,7 +19,4 @@ urllib3==2.8.0
 uvicorn==0.53.0
 pytest
 httpx
-pytest
-httpx2
-pytest
-httpx2
+SQLAlchemy==2.1.3
