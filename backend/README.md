@@ -22,7 +22,7 @@ Run it:
 
 | Version | Change | Recall | False alarms |
 |---------|--------|--------|--------------|
-| baseline | initial prompt and chunking | TODO | TODO |
+| baseline | initial prompt and chunking | 0.60 | 2 |
 
 Evaluation notes:
 
