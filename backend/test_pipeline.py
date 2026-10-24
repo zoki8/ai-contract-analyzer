@@ -132,6 +132,34 @@ def test_dedupe_keeps_unrelated_findings():
     assert len(dedupe([a, b])) == 2
 
 
+
+CUT_SOURCE = ("Section 9. Fees. If the Customer pays late, the Customer shall pay a late fee "
+              "of 2% per\nweek without any cap. The Customer shall pay a fee of 100 EUR for each "
+              "additional user. Section 10. Notices.")
+
+
+def test_dedupe_merges_two_pieces_of_a_clause_cut_by_the_overlap():
+    # neither quote contains the other, but they cover overlapping text in the contract
+    a = finding("penalty", "If the Customer pays late, the Customer shall pay a late fee of 2")
+    b = finding("penalty", "the Customer shall pay a late fee of 2% per week without any cap.")
+    out = dedupe([a, b], CUT_SOURCE)
+    assert len(out) == 1
+    assert out[0].quote == ("If the Customer pays late, the Customer shall pay a late fee "
+                            "of 2% per week without any cap.")
+
+
+def test_dedupe_keeps_neighbouring_clauses_apart():
+    a = finding("penalty", "the Customer shall pay a late fee of 2% per week without any cap.")
+    b = finding("penalty", "The Customer shall pay a fee of 100 EUR for each additional user.")
+    assert len(dedupe([a, b], CUT_SOURCE)) == 2
+
+
+def test_dedupe_keeps_the_higher_severity():
+    low = Finding(category="penalty", severity="low", quote="late fee of 2% per week", explanation="x")
+    high = finding("penalty", "the Customer shall pay a late fee of 2% per week")
+    assert dedupe([high, low], CUT_SOURCE)[0].severity == "high"
+    assert dedupe([low, high], CUT_SOURCE)[0].severity == "high"
+
 # ---------- evaluation matching ----------
 
 FINDINGS = [{"category": "penalty", "quote": "The Client shall pay a penalty of 5% per day."}]
