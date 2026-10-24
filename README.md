@@ -83,7 +83,8 @@ marked. [Why, and what was tried](#what-the-errors-show).
   with a warning instead of being silently trusted.
 - **Long contracts**: text is split on section headings (`Section`, `Article`, `Član`) and packed
   into chunks that fit the model's context, with an overlapping character split as a fallback.
-- **Deduplication**: the same clause found in two overlapping chunks is reported once.
+- **Deduplication**: the same clause found in two overlapping chunks is reported once, even
+  when the cut split it into two partial quotes.
 - **Desktop app**: a Tauri window that starts its own packaged Python backend. No terminal,
   Python or Node.js needed to use it.
 - **Background jobs with progress**: the analysis runs section by section while the window shows a
@@ -91,7 +92,7 @@ marked. [Why, and what was tried](#what-the-errors-show).
 - **Input validation**: size limit, real-PDF check and scanned-PDF detection, each with a clear
   message.
 - **Evaluation and tests**: recall, precision and hallucinated quotes on labelled contracts, a
-  model comparison script, and 31 unit and API tests.
+  model comparison script, a stress test on long contracts, and unit and API tests.
 
 ---
 
@@ -129,7 +130,7 @@ flowchart TD
     F --> G
     G --> H[analyze_chunk<br/>Ollama qwen2.5:7b, JSON schema, temperature 0]
     H --> I[Pydantic validation<br/>ChunkAnalysis]
-    I --> J[dedupe<br/>same category + one quote inside the other]
+    I --> J[dedupe<br/>same category + quotes overlap in the contract]
     J --> K[quote check<br/>word for word or 90% similar to the source]
     K --> L[findings as JSON]
 ```
@@ -147,7 +148,11 @@ flowchart TD
 4. **Validation.** The answer is parsed and validated with Pydantic, so a category outside the
    allowed list or a missing field raises an error instead of reaching the user.
 5. **Deduplication.** Overlapping chunks can report the same clause twice. Two findings with the
-   same category where one quote contains the other are merged, keeping the longer quote.
+   same category are merged when one quote contains the other, or when both quotes cover an
+   overlapping part of the contract. The second case happens when the overlap cuts a long clause
+   in two: each chunk returns a different piece and neither piece contains the other. Each quote
+   is located in the contract, and overlapping pieces are merged into one quote cut from the
+   original text, keeping the higher severity.
 6. **Quote check.** Quotes and the source are compared after "squashing" (lowercase, hyphenated
    words rejoined, whitespace removed). A quote that is not there word for word is located at its
    best-matching position in the text and accepted if at least 90% of it agrees, because the model
@@ -186,7 +191,7 @@ sequenceDiagram
     end
     T->>O: analyze each chunk
     O-->>T: findings (JSON)
-    T->>A: JOBS[job_id] = done + result
+    T->>A: UPDATE jobs SET status = done, result (SQLite)
     U->>A: GET /jobs/{job_id}
     A-->>U: { status: done, result }
 ```
@@ -211,6 +216,7 @@ stateDiagram-v2
 | Layer | Tools |
 |---|---|
 | Pipeline and API | Python, FastAPI, Uvicorn, Pydantic, pypdf, requests |
+| Storage | SQLite through SQLAlchemy (analysis jobs and results) |
 | Model | `qwen2.5:7b` through Ollama, running locally |
 | Frontend | React, TypeScript, Vite |
 | Desktop | Tauri 2 (Rust), backend packaged with PyInstaller as a sidecar |
@@ -408,6 +414,40 @@ output, and other work was running on the machine during that run.
   prompt deliberately treats fair, mutual clauses as not risky. An optional renewal right is
   labelled "Renewal Term" in CUAD but is not automatic renewal.
 
+### Stress test: long contracts and cut lines
+
+The CUAD contracts are at most 30 thousand characters, so they rarely exercise the chunking. Three
+synthetic contracts (`backend/make_stress.py`, fictional parties) plant known risky clauses where
+chunking is most likely to fail:
+
+| Contract | Size | What it tests |
+|---|---|---|
+| `stress_long` | 253k chars, 61 pages, 70 sections | clauses from the first section to the last sentence |
+| `stress_giant` | one 45k-char Article, no sub-headings | the character split: clauses across cut lines and inside overlaps |
+| `stress_sr` | 134k chars, Serbian, `Član` headings | Serbian text and headings |
+
+```bash
+cd backend
+python run_stress.py --chunks-only        # no model: is every clause whole in some chunk?
+python run_stress.py --only stress_giant  # with the model
+```
+
+`--chunks-only` showed that a 500-character overlap only protects clauses shorter than 500
+characters: an 800-character liability clause placed across the overlap is whole in no chunk.
+The model run on `stress_giant` then showed what happens to it: both chunks report a piece, and
+the old deduplication kept both pieces because neither contains the other. The same happened to
+a short clause on a cut line. After the fix (merging quotes that overlap in the contract), the
+same model output goes from 7 findings to 5, and every remaining finding is a whole clause.
+
+| `stress_giant`, qwen2.5:7b | Found | Findings after dedupe |
+|---|---|---|
+| before the fix | 4/5 | 7 (two clauses reported as two pieces each) |
+| after the fix | 4/5 | 4 (one per clause) |
+
+The clause still missed (`cap_1_month`) is whole inside one chunk, so that miss is the model, not
+the chunking. Runs are not exactly repeatable even at temperature 0: the number of findings before
+deduplication was 8 in one run and 7 in another.
+
 ---
 
 ## Tests
@@ -417,11 +457,11 @@ cd backend
 pytest -v
 ```
 
-31 tests cover text extraction, normalization, chunking (splitting, packing, overlap, limits),
-deduplication, near-verbatim quote matching, the evaluation matching rules and API validation
-(400, 413, 422, 404, and a real upload). None of them needs the model. One more test is marked
-`xfail`: it documents a known limitation (a heading mentioned inside a sentence also splits the
-text) and will start passing when that is fixed.
+The tests cover text extraction, normalization, chunking (splitting, packing, overlap, limits),
+deduplication (including two pieces of one cut clause), near-verbatim quote matching, the
+evaluation matching rules, API validation (400, 413, 422, 404, and a real upload) and job
+storage (a finished job survives a restart, an interrupted one is marked as failed). None of
+them needs the model.
 
 ---
 
@@ -435,15 +475,19 @@ ai-contract-analyzer/
 │   ├── llm.py               # Ollama call, prompt, structured output
 │   ├── cli.py               # quote check, dedupe, analyze_text pipeline, CLI entry point
 │   ├── main.py              # FastAPI app: validation, background jobs, CORS
+│   ├── db.py                # SQLite job table (SQLAlchemy)
 │   ├── server.py            # entry point for the packaged backend (sidecar)
 │   ├── run_eval.py          # recall / precision / hallucination evaluation
 │   ├── import_cuad.py       # builds evaluation cases from CUAD
 │   ├── compare_results.py   # model comparison table
+│   ├── make_stress.py       # generates the long synthetic stress contracts
+│   ├── run_stress.py        # chunk coverage and model run on the stress contracts
 │   ├── test_pipeline.py     # pytest suite
 │   └── requirements.txt
 ├── eval/
 │   ├── contracts/           # CUAD contracts (.txt) and own test contracts (.pdf)
 │   ├── expected/            # must_find / must_not_flag per contract
+│   ├── stress/              # synthetic long contracts, expected clauses, results
 │   └── results/             # one summary per evaluated model
 └── frontend/
     ├── src/                 # React app: upload, progress, risk bar, finding cards
@@ -481,16 +525,19 @@ backend stays in Python and ships as a PyInstaller binary that Tauri starts and 
 also exits by itself if the app that started it disappears, so it never keeps port 8000 busy.
 
 **Background thread instead of a long request.** Returning a job id and polling avoids request
-timeouts and lets the window show progress. Jobs are stored in a dictionary guarded by a
-`threading.Lock`, held only while the dictionary is read or written, never during a model call.
+timeouts and lets the window show progress. Jobs are stored in a SQLite table, so a finished
+result survives a restart of the backend. Each update opens its own short session, and jobs that
+were still running when the backend stopped are marked as failed on the next start, because they
+cannot be resumed.
 
 ---
 
 ## Known limitations
-- **Heading detection:** headings are split only after sentence-ending
-  punctuation or a newline. Because text is normalized to one line before
-  chunking, a heading preceded by a title (e.g. "TERMINATION Section 7")
-  may not be split.
+- **Heading detection:** headings are split only after sentence-ending punctuation or a newline,
+  so a heading preceded by a title on the same line (e.g. "TERMINATION Section 7") is not split.
+- **Clauses longer than the overlap.** Inside a section longer than 6000 characters, a clause
+  longer than the 500-character overlap can be cut so that no chunk holds all of it. The pieces are
+  merged afterwards, but the model never reads the clause as a whole.
 - **Small evaluation set.** 16 CUAD contracts and 52 labelled clauses are enough to find patterns,
   not to give a precise accuracy. One clause more or less moves recall on the held-out set by 4
   points.
@@ -502,9 +549,6 @@ timeouts and lets the window show progress. Jobs are stored in a dictionary guar
 - **Needs Ollama and a capable machine.** `qwen2.5:7b` takes about 5 GB; on a 4 GB GPU it runs partly
   on the CPU and a long contract takes a couple of minutes.
 - **Linux build only** for now, and no OCR: scanned PDFs are rejected.
-- **Jobs live in memory** and are lost when the app closes.
-- **Heading detection is simple**: "as described in Section 3" in the middle of a sentence also
-  splits the text.
 - **Not legal advice.**
 
 ---
