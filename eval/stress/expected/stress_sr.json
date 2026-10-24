@@ -1,0 +1,41 @@
+{
+  "source": "synthetic stress test (Serbian, 40 'Član' sections)",
+  "must_find": [
+    {
+      "category": "penalty",
+      "quote_contains": [
+        "Ukoliko Naručilac kasni sa plaćanjem, dužan je da Pružaocu plati ugovornu kaznu u iznosu od jedan odsto (1%) od dugovanog iznosa za svaki dan kašnjenja, bez gornje granice."
+      ],
+      "id": "kazna_sr"
+    },
+    {
+      "category": "auto_renewal",
+      "quote_contains": [
+        "Ovaj ugovor se automatski produžava za naredni period od dve (2) godine, ukoliko Naručilac najkasnije šest (6) meseci pre isteka ne dostavi pisano obaveštenje da ne želi produženje."
+      ],
+      "id": "obnova_sr"
+    },
+    {
+      "category": "termination",
+      "quote_contains": [
+        "Pružalac može jednostrano raskinuti ovaj ugovor u bilo kom trenutku, bez otkaznog roka i bez navođenja razloga, pri čemu Naručilac nema pravo na povraćaj unapred plaćenih iznosa."
+      ],
+      "id": "raskid_sr"
+    },
+    {
+      "category": "liability",
+      "quote_contains": [
+        "Ukupna odgovornost Pružaoca po ovom ugovoru ni u kom slučaju ne može preći iznos naknade koju je Naručilac platio u poslednjih trideset (30) dana pre nastanka štete."
+      ],
+      "id": "odgovornost_sr"
+    }
+  ],
+  "must_not_flag": [
+    {
+      "quote_contains": [
+        "Na ovaj ugovor primenjuje se pravo Republike Srbije."
+      ],
+      "id": "pravo_sr"
+    }
+  ]
+}

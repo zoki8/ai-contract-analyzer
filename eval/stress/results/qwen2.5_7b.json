@@ -1,0 +1,14 @@
+[
+  {
+    "contract": "stress_giant",
+    "chars": 45207,
+    "chunks": 10,
+    "found": "4/5",
+    "false_alarms": 0,
+    "hallucinated": 0,
+    "before_dedupe": 7,
+    "after_dedupe": 4,
+    "failed_chunks": [],
+    "seconds": 113
+  }
+]

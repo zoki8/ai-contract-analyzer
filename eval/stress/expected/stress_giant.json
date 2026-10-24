@@ -1,0 +1,48 @@
+{
+  "source": "synthetic stress test (one 45k-char Article; clauses across cut lines and inside overlaps)",
+  "must_find": [
+    {
+      "category": "penalty",
+      "quote_contains": [
+        "If the Customer fails to pay any invoice when due, the Customer shall pay a late fee of two and a half percent (2.5%) of the outstanding amount for each week of delay, without any cap."
+      ],
+      "id": "late_fee"
+    },
+    {
+      "category": "liability",
+      "quote_contains": [
+        "Notwithstanding any other provision of this Agreement, and to the maximum extent permitted by applicable law, the Supplier, its affiliates, subcontractors and licensors shall not be liable to the Customer or to any third party for any indirect, incidental, special, exemplary, punitive or consequential damages of any kind, including without limitation damages for loss of revenue, loss of anticipated savings, loss of goodwill, loss or corruption of data, cost of procurement of substitute services or business interruption, whether arising in contract, tort, strict liability or otherwise, and regardless of whether the Supplier was advised of the possibility of such damages, and the Customer hereby irrevocably waives any right to claim such damages."
+      ],
+      "id": "long_liability"
+    },
+    {
+      "category": "auto_renewal",
+      "quote_contains": [
+        "Upon expiry of the Initial Term, this Agreement shall automatically renew for successive periods of thirty-six (36) months unless the Customer gives written notice of non-renewal at least one hundred and eighty (180) days before the end of the then-current term."
+      ],
+      "id": "renew_36"
+    },
+    {
+      "category": "termination",
+      "quote_contains": [
+        "The Supplier may terminate this Agreement or any Work Order at any time, for any reason or no reason, with immediate effect by written notice to the Customer, and no refund of prepaid fees shall be due."
+      ],
+      "id": "supplier_quits"
+    },
+    {
+      "category": "liability",
+      "quote_contains": [
+        "In no event shall the Supplier's total aggregate liability under this Agreement exceed the fees paid by the Customer in the one (1) month preceding the event giving rise to the claim."
+      ],
+      "id": "cap_1_month"
+    }
+  ],
+  "must_not_flag": [
+    {
+      "quote_contains": [
+        "This Agreement shall be governed by and construed in accordance with the laws of the Republic of Serbia, without regard to its conflict of laws rules."
+      ],
+      "id": "governing_law"
+    }
+  ]
+}

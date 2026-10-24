@@ -1,0 +1,68 @@
+{
+  "source": "synthetic stress test (70 sections, clauses from the first section to the last sentence)",
+  "must_find": [
+    {
+      "category": "penalty",
+      "quote_contains": [
+        "If the Customer fails to pay any invoice when due, the Customer shall pay a late fee of two and a half percent (2.5%) of the outstanding amount for each week of delay, without any cap."
+      ],
+      "id": "late_fee"
+    },
+    {
+      "category": "payment_terms",
+      "quote_contains": [
+        "All invoices are payable in full within seven (7) days of the invoice date, and the Customer may not withhold or set off any amount for any reason, including disputed deliverables."
+      ],
+      "id": "pay_7_days"
+    },
+    {
+      "category": "penalty",
+      "quote_contains": [
+        "Should the Customer withdraw any Work Order after signature, the Customer shall pay liquidated damages equal to forty percent (40%) of the total value of that Work Order."
+      ],
+      "id": "withdrawal_fee"
+    },
+    {
+      "category": "auto_renewal",
+      "quote_contains": [
+        "Upon expiry of the Initial Term, this Agreement shall automatically renew for successive periods of thirty-six (36) months unless the Customer gives written notice of non-renewal at least one hundred and eighty (180) days before the end of the then-current term."
+      ],
+      "id": "renew_36"
+    },
+    {
+      "category": "termination",
+      "quote_contains": [
+        "The Supplier may terminate this Agreement or any Work Order at any time, for any reason or no reason, with immediate effect by written notice to the Customer, and no refund of prepaid fees shall be due."
+      ],
+      "id": "supplier_quits"
+    },
+    {
+      "category": "liability",
+      "quote_contains": [
+        "In no event shall the Supplier's total aggregate liability under this Agreement exceed the fees paid by the Customer in the one (1) month preceding the event giving rise to the claim."
+      ],
+      "id": "cap_1_month"
+    },
+    {
+      "category": "liability",
+      "quote_contains": [
+        "The Supplier shall not be liable for any loss of data, loss of profits or business interruption, even where such loss results from the Supplier's gross negligence or wilful misconduct."
+      ],
+      "id": "gross_negligence"
+    }
+  ],
+  "must_not_flag": [
+    {
+      "quote_contains": [
+        "Each undisputed invoice shall be paid within thirty (30) days of receipt by bank transfer to the account stated on the invoice."
+      ],
+      "id": "pay_30_days"
+    },
+    {
+      "quote_contains": [
+        "This Agreement shall be governed by and construed in accordance with the laws of the Republic of Serbia, without regard to its conflict of laws rules."
+      ],
+      "id": "governing_law"
+    }
+  ]
+}
